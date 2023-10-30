@@ -2,15 +2,13 @@ import train_model
 import plotting_utilities
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 
 
 # Settings
 STARTING_SEED = 1
 PARAMETER_SAVING_FREQUENCY = 100
 NUM_RUNS = 10
-activation_functions = ['tanh']
+activation_functions = ['tanh', 'sigmoid', 'relu']
 
 
 def run_for_activation(activation_function):
