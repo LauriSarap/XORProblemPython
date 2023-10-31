@@ -8,7 +8,7 @@ import os
 STARTING_SEED = 1
 PARAMETER_SAVING_FREQUENCY = 100
 NUM_RUNS = 10
-activation_functions = ['tanh']
+activation_functions = ['tanh', 'sigmoid', 'relu']
 
 
 def run_for_activation(activation_function):
@@ -92,6 +92,16 @@ def run_for_activation(activation_function):
         raw_data = pd.read_csv(raw_data_file)
         final_epoch_data = raw_data[raw_data['Seed & Epoch'].str.contains("Epoch 50000")]
         final_epoch_data.to_csv(final_values_file, index=False)
+
+    # Plot multiple seed losses on the same plot
+    multiple_seed_plots_directory = os.path.join(directory, 'multiple_seed_plots')
+    if not os.path.exists(multiple_seed_plots_directory):
+        os.makedirs(multiple_seed_plots_directory)
+        raw_data = pd.read_csv(raw_data_file)
+        raw_data['Seed'] = raw_data['Seed & Epoch'].apply(lambda x: x.split(' ')[1])
+        raw_data['Epoch'] = raw_data['Seed & Epoch'].apply(lambda x: int(x.split(' ')[-1]))
+        multiple_seed_losses_df = raw_data.pivot_table(index='Epoch', columns='Seed', values='Loss').reset_index()
+        plotting_utilities.plot_all_loss_for_one_function(multiple_seed_losses_df, multiple_seed_plots_directory, activation_function)
 
 
 for activation_function in activation_functions:
