@@ -3,150 +3,97 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 
-def plot_and_save_average(dataframe, directory, column_name, activation_function):
+def plot_data(dataframe, x_column, y_columns, directory, filename, title, x_label, y_label, is_log_yscale=False, is_log_xscale=True):
     plt.figure(figsize=(10, 6))
-    plt.plot(dataframe['Epoch'], dataframe[column_name], label=column_name, color='blue')
-    plt.xlabel('Epoch (log scale)')
-    plt.ylabel(f'{column_name} (log scale)')
-    plt.title(f'Average {column_name} over epochs for {activation_function} activation function')
+
+    max_value = 0
+    min_value = 0
+    for column in y_columns:
+        plt.plot(dataframe[x_column], dataframe[column], label=column)
+        max_value = max(dataframe[column].max(), dataframe[column].max())
+        min_value = min(dataframe[column].min(), dataframe[column].min())
+
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
     plt.legend()
     plt.grid(True, which="both", ls="--", c='0.7')
-    plt.xscale('log')
+    if is_log_xscale:
+        plt.xlabel(f'{x_label} (log scale)')
+        plt.xscale('log')
+        ax = plt.gca()
+        ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
+        ax.xaxis.set_major_locator(ticker.FixedLocator([10, 100, 1000, 10000, 50000]))
 
-    if column_name == 'Loss':
-        max_value = dataframe[column_name].max()
-        min_value = dataframe[column_name].min()
-        current_ticks = plt.yticks()[0].tolist()
-        current_ticks.extend([max_value, min_value])
-        plt.yticks(sorted(set(current_ticks)))
-        #plt.yticks([0, 0.01, 0.1, 0.5], [0, 0.01, 0.1, 0.5])  # Set y-ticks
-        #plt.ylim(bottom=0)
-
-    ax = plt.gca()
-    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.xaxis.set_major_locator(ticker.FixedLocator([10, 100, 500, 1000, 10000, 50000]))
-    plt.tight_layout()
-    plt.savefig(os.path.join(directory, f'{column_name}_{activation_function}_plot.png'))
-    plt.close()
-
-
-def plot_and_save_seed(dataframe, directory, column_name, activation_function, seed):
-    plt.figure(figsize=(10, 6))
-    plt.plot(dataframe['Epoch'], dataframe[column_name], label=column_name, color='blue')
-    plt.xlabel('Epoch (log scale)')
-    plt.ylabel(column_name)
-    plt.title(f'{column_name} over epochs for {activation_function} activation function for network {seed}')
-    plt.legend()
-    plt.grid(True, which="both", ls="--", c='0.7')
-    plt.xscale('log')
-
-    if column_name == 'Loss':
+    if is_log_yscale:
         plt.yscale('log')
-        max_value = dataframe[column_name].max()
-        min_value = dataframe[column_name].min()
+        plt.ylabel(f'{y_label} (log scale)')
         current_ticks = plt.yticks()[0].tolist()
         current_ticks.extend([max_value, min_value])
         plt.yticks(sorted(set(current_ticks)))
-        #plt.yticks([0, 0.01, 0.1, 0.5], [0, 0.01, 0.1, 0.5])  # Set y-ticks
-        #plt.ylim(bottom=0)
 
-    ax = plt.gca()
-    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.xaxis.set_major_locator(ticker.FixedLocator([10, 100, 500, 1000, 10000, 50000]))
     plt.tight_layout()
-    plt.savefig(os.path.join(directory, f'{column_name}_{activation_function}_seed_{seed}_plot.png'))
+
+    safe_filename = "".join([c for c in filename if c.isalpha() or c.isdigit() or c in (' ', '.', '_')]).rstrip()
+    plt.savefig(os.path.join(directory, safe_filename))
     plt.close()
+
+
+def plot_and_save_average(dataframe, directory, column_name, activation_function):
+    is_log_yscale = False
+    if column_name == 'Loss':
+        is_log_yscale = False
+
+    plot_data(
+        dataframe=dataframe, x_column='Epoch', y_columns=[column_name],
+        directory=directory, filename=f'{column_name}_{activation_function}_average_plot.png',
+        title=f'Average {column_name} over epochs for {activation_function} activation function',
+        x_label='Epoch', y_label=f'{column_name}', is_log_yscale=is_log_yscale,
+    )
 
 
 def plot_all_gradients_average(dataframe, directory, activation_function):
-    plt.figure(figsize=(10, 6))
-
     gradient_columns = [col for col in dataframe.columns if "GW" in col or "GB" in col]
-
-    for column in gradient_columns:
-        plt.plot(dataframe['Epoch'], dataframe[column], label=column)
-
-    plt.xlabel('Epoch (log scale)')
-    plt.ylabel('Gradient value')
-    plt.title(f'All average gradients over epochs for {activation_function} activation function')
-    plt.legend()
-    plt.grid(True, which="both", ls="--", c='0.7')
-    plt.xscale('log')
-
-    ax = plt.gca()
-    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.xaxis.set_major_locator(ticker.FixedLocator([10, 100, 500, 1000, 10000, 50000]))
-    plt.tight_layout()
-    plt.savefig(os.path.join(directory, f'All_average_gradients_{activation_function}_plot.png'))
-    plt.close()
+    plot_data(dataframe=dataframe, x_column='Epoch', y_columns=gradient_columns,
+              directory=directory, filename=f'All_average_gradients_{activation_function}_plot.png',
+              title=f'All average gradients over epochs for {activation_function} activation function',
+              x_label= 'Epoch', y_label='Gradient value')
 
 
 def plot_all_parameters_average(dataframe, directory, activation_function):
-    plt.figure(figsize=(10, 6))
+    parameter_columns = [col for col in dataframe.columns if ("W" in col or "B" in col) and ("GW" not in col and "GB" not in col)]
+    plot_data(dataframe=dataframe, x_column='Epoch', y_columns=parameter_columns,
+              directory=directory, filename=f'All_average_parameters_{activation_function}_plot.png',
+              title=f'All average parameters over epochs for {activation_function} activation function',
+              x_label='Epoch', y_label='Parameter value')
 
-    parameter_columns = [col for col in dataframe.columns if
-                        ("W" in col or "B" in col) and ("GW" not in col and "GB" not in col)]
 
-    for column in parameter_columns:
-        plt.plot(dataframe['Epoch'], dataframe[column], label=column)
+def plot_and_save_seed(dataframe, directory, column_name, activation_function, seed):
+    is_log_yscale = False
+    if column_name == 'Loss':
+        is_log_yscale = True
 
-    plt.xlabel('Epoch (log scale)')
-    plt.ylabel('Parameter value')
-    plt.title(f'All average parameters over epochs for {activation_function} activation function')
-    plt.legend()
-    plt.grid(True, which="both", ls="--", c='0.7')
-    plt.xscale('log')
-
-    ax = plt.gca()
-    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.xaxis.set_major_locator(ticker.FixedLocator([10, 100, 500, 1000, 10000, 50000]))
-    plt.tight_layout()
-    plt.savefig(os.path.join(directory, f'All_average_parameters_{activation_function}_plot.png'))
-    plt.close()
+    plot_data(
+        dataframe=dataframe, x_column='Epoch', y_columns=[column_name],
+        directory=directory, filename=f'{column_name}_{activation_function}_seed_{seed}_plot.png',
+        title=f'{column_name} over epochs for {activation_function} activation function for network {seed}',
+        x_label='Epoch', y_label=f'{column_name}', is_log_yscale=is_log_yscale,
+    )
 
 
 def plot_all_gradients_seed(dataframe, directory, activation_function, seed):
-    plt.figure(figsize=(10, 6))
-
     gradient_columns = [col for col in dataframe.columns if "GW" in col or "GB" in col]
-
-    for column in gradient_columns:
-        plt.plot(dataframe['Epoch'], dataframe[column], label=column)
-
-    plt.xlabel('Epoch (log scale)')
-    plt.ylabel('Gradient value')
-    plt.title(f'All gradients over epochs for {activation_function} activation function for network {seed}')
-    plt.legend()
-    plt.grid(True, which="both", ls="--", c='0.7')
-    plt.xscale('log')
-
-    ax = plt.gca()
-    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.xaxis.set_major_locator(ticker.FixedLocator([10, 100, 500, 1000, 10000, 50000]))
-    plt.tight_layout()
-    plt.savefig(os.path.join(directory, f'All_gradients_{activation_function}_seed_{seed}_plot.png'))
-    plt.close()
+    plot_data(dataframe=dataframe, x_column='Epoch', y_columns=gradient_columns,
+              directory=directory, filename=f'All_gradients_{activation_function}_seed_{seed}_plot.png',
+              title=f'All gradients over epochs for {activation_function} activation function for network {seed}',
+              x_label='Epoch',
+              y_label='Gradient value')
 
 
 def plot_all_parameters_seed(dataframe, directory, activation_function, seed):
-    plt.figure(figsize=(10, 6))
-
-    parameter_columns = [col for col in dataframe.columns if
-                        ("W" in col or "B" in col) and ("GW" not in col and "GB" not in col)]
-
-    for column in parameter_columns:
-        plt.plot(dataframe['Epoch'], dataframe[column], label=column)
-
-    plt.xlabel('Epoch (log scale)')
-    plt.ylabel('Parameter value')
-    plt.title(f'All parameters over epochs for {activation_function} activation function for network {seed}')
-    plt.legend()
-    plt.grid(True, which="both", ls="--", c='0.7')
-    plt.xscale('log')
-
-    ax = plt.gca()
-    ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
-    ax.xaxis.set_major_locator(ticker.FixedLocator([10, 100, 500, 1000, 10000, 50000]))
-    plt.tight_layout()
-    plt.savefig(os.path.join(directory, f'All_parameters_{activation_function}_seed_{seed}_plot.png'))
-    plt.close()
+    parameter_columns = [col for col in dataframe.columns if ("W" in col or "B" in col) and ("GW" not in col and "GB" not in col)]
+    plot_data(dataframe=dataframe, x_column='Epoch', y_columns=parameter_columns,
+              directory=directory, filename=f'All_parameters_{activation_function}_seed_{seed}_plot.png',
+              title=f'All parameters over epochs for {activation_function} activation function for network {seed}',
+              x_label='Epoch',
+              y_label='Parameter value')

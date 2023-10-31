@@ -8,16 +8,14 @@ import os
 STARTING_SEED = 1
 PARAMETER_SAVING_FREQUENCY = 100
 NUM_RUNS = 10
-activation_functions = ['tanh', 'sigmoid', 'relu']
+activation_functions = ['tanh']
 
 
 def run_for_activation(activation_function):
-    # Run the model and save the raw data
     print(f"Running for activation function: {activation_function}")
     directory = f'./{activation_function}'
     if not os.path.exists(directory):
         os.makedirs(directory)
-
     raw_data_file = os.path.join(directory, f'{activation_function}_raw_data.csv')
 
     if not os.path.exists(raw_data_file):
@@ -68,8 +66,6 @@ def run_for_activation(activation_function):
     # Average the data
     averaged_data_file = os.path.join(directory, f'{activation_function}_averaged_data.csv')
     if not os.path.exists(averaged_data_file):
-        #raw_data = pd.read_csv(raw_data_file)
-        #raw_data['Epoch'] = raw_data['Seed & Epoch'].apply(lambda x: int(x.split(' ')[-1]))
         average_losses = raw_data.groupby('Epoch').mean().reset_index()
         average_losses.to_csv(averaged_data_file, index=False)
 
