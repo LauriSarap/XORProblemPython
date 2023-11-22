@@ -12,7 +12,6 @@ The research aims to answer the question: **"How do different activation functio
 - Save training progress into a CSV file and plot it on graphs.
 - CSV files with precomputed network training data for 10 seeds
 - CSV files include loss, weight, bias and gradient values for 50k epochs
-- Sequences prealigned for Homeobox genes coding sequences (Pseudogenes not included)
 
 ## Requirements
 
